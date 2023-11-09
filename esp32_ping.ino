@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 
 #define LED 2
 
@@ -19,7 +20,7 @@ const int delayTime = 300000; // 5 minutes
 const int onErrorDelayTime = 60000; // 1 minute
 
 HTTPClient http;
-boolean enableErrorReporting = false; // Set to false to disable error reporting
+boolean enableErrorReporting = true; // Set to false to disable error reporting
 
 void setup() {
   Serial.begin(9600);
@@ -52,13 +53,20 @@ void logError(String errorMessage) {
 void reportErrors() {
   if (enableErrorReporting && errorCount > 0) {
     http.begin(errorReportingAddress); // Use the error reporting address
+    http.addHeader("Content-Type", "application/json");
     http.addHeader("Location", locationHeader);
     http.addHeader("Authorization", authorizationHeader);
 
-    String errorData = "";
+    DynamicJsonDocument jsonDocument(1024);
+    JsonArray errorsArray = jsonDocument.createNestedArray("errors");
+
     for (int i = 0; i < errorCount; i++) {
-      errorData += "Error " + String(i + 1) + ": " + errorMessages[i] + "\n";
+      JsonObject errorObject = errorsArray.createNestedObject();
+      errorObject["message"] = errorMessages[i];
     }
+
+    String errorData;
+    serializeJson(jsonDocument, errorData);
 
     int httpResponseCode = http.POST(errorData);
     if (httpResponseCode == 200) {
@@ -75,7 +83,7 @@ void reportErrors() {
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
     http.begin(serverAddress); // Use the server address for GET request
-    http.addHeader("Location", "Makumbusho");
+    http.addHeader("Location", locationHeader);
     http.addHeader("Authorization", authorizationHeader);
 
     int httpResponseCode = http.GET();
