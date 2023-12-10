@@ -7,13 +7,13 @@
 const char* ssid = "your_wifi_ssid";
 const char* password = "your_wifi_password";
 const char* serverAddress = "your_server_address";
-const char* authorizationHeader = "Your_Authorization_Header";
-const char* locationHeader = "Your_Location_Header";
+const char* apikey = "Your_API_KEY";
+const char* location = "Your_Location_Header";
 const char* errorReportingAddress = "your_error_reporting_address";
 
 volatile boolean isError = false;
 int errorCount = 0;
-const int maxErrorCount = 50;
+const int maxErrorCount = 5;
 String errorMessages[maxErrorCount];
 
 const int delayTime = 300000; // 5 minutes
@@ -45,49 +45,69 @@ void setup() {
 
 void logError(String errorMessage) {
   if (errorCount < maxErrorCount) {
-    errorMessages[errorCount] = errorMessage;
+    // Add a timestamp to the error message
+    unsigned long timestamp = millis();
+    String timestampStr = String(timestamp);
+    errorMessages[errorCount] = timestampStr + ": " + errorMessage;
     errorCount++;
   }
 }
 
 void reportErrors() {
   if (enableErrorReporting && errorCount > 0) {
-    http.begin(errorReportingAddress); // Use the error reporting address
+    http.begin(errorReportingAddress);
     http.addHeader("Content-Type", "application/json");
-    http.addHeader("Location", locationHeader);
-    http.addHeader("Authorization", authorizationHeader);
+    http.addHeader("apikey", apikey);
 
     DynamicJsonDocument jsonDocument(1024);
+    jsonDocument["source"] = location;
+
     JsonArray errorsArray = jsonDocument.createNestedArray("errors");
 
     for (int i = 0; i < errorCount; i++) {
       JsonObject errorObject = errorsArray.createNestedObject();
-      errorObject["message"] = errorMessages[i];
+      
+      // Extract timestamp and message from the error message
+      int timestampEnd = errorMessages[i].indexOf(": ");
+      String timestamp = errorMessages[i].substring(0, timestampEnd);
+      String message = errorMessages[i].substring(timestampEnd + 2);
+
+      errorObject["timestamp"] = timestamp;
+      errorObject["message"] = message;
     }
 
     String errorData;
     serializeJson(jsonDocument, errorData);
 
     int httpResponseCode = http.POST(errorData);
-    if (httpResponseCode == 200) {
+    if (httpResponseCode == 201) {
       Serial.println("Errors reported successfully");
       errorCount = 0;
     } else {
       Serial.println("Error reporting errors");
     }
 
-    http.end(); // Free resources
+    http.end();
   }
 }
 
+
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
-    http.begin(serverAddress); // Use the server address for GET request
-    http.addHeader("Location", locationHeader);
-    http.addHeader("Authorization", authorizationHeader);
+    http.begin(serverAddress); // Use the server address for POST request
+    http.addHeader("apikey", apikey); // Authorization 
+    http.addHeader("Content-Type", "application/json"); // Specify the content type
 
-    int httpResponseCode = http.GET();
-    if (httpResponseCode == 204) {
+    // Create a JSON document for the POST data
+    DynamicJsonDocument postData(1024);
+    postData["status"] = "ONLINE";
+    postData["source"] = location;
+
+    String postDataStr;
+    serializeJson(postData, postDataStr);
+
+    int httpResponseCode = http.POST(postDataStr);
+    if (httpResponseCode == 201) { // Check for the success response code (201 Created)
       digitalWrite(LED, LOW);
       Serial.println("LED is off");
       delay(200);
@@ -103,11 +123,11 @@ void loop() {
       Serial.println(httpResponseCode); // Print return code
     } else {
       isError = true;
-      Serial.print("Error on sending GET request: ");
+      Serial.print("Error on sending POST request: ");
       digitalWrite(LED, HIGH);
       Serial.println("LED is on");
       Serial.println(httpResponseCode);
-      logError("Failed to send GET request. HTTP response code: " + String(httpResponseCode));
+      logError("Failed to send POST request. HTTP response code: " + String(httpResponseCode));
     }
 
     http.end(); // Free resources
