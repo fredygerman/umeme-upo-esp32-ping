@@ -27,8 +27,8 @@ This project involves an ESP-based device that pings a server to keep track of p
    - `ssid`: Your WiFi SSID.
    - `password`: Your WiFi password.
    - `serverAddress`: Your server's address.
-   - `authorizationHeader`: Your authorization header.
-   - `locationHeader`: Your location header.
+   - `apikey`: Your authorization API key from Supabase.
+   - `location`: Your location.
    - `errorReportingAddress`: Your error reporting address.
 
 3. Upload the code to your ESP device.
@@ -57,7 +57,6 @@ This project involves an ESP-based device that pings a server to keep track of p
 ## Known Issues 🚧
 
 - The device may fail to connect to WiFi if the network is not available.
--
 
 #### If the LED is on for more than 5 seconds, an error has occurred. The first thing to do is to check your wifi connectivity and UNPLUG and PLUG the device back in. If the LED is still on, check the serial monitor for detailed information on errors.
 
@@ -65,7 +64,7 @@ This project involves an ESP-based device that pings a server to keep track of p
 
 ## Troubleshooting
 
-- All error will cause the LED to blink to stay on. so if the LED is on for more than a 5 seconds, an error has occurred.
+- All errors will cause the LED to blink to stay on. So if the LED is on for more than 5 seconds, an error has occurred.
 - If the device fails to connect to WiFi, the LED will remain on.
 - Check the serial monitor for detailed information on errors.
 

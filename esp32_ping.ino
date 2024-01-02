@@ -6,10 +6,10 @@
 
 const char* ssid = "your_wifi_ssid";
 const char* password = "your_wifi_password";
-const char* serverAddress = "https://<supabase-project-id>.supabase.co/rest/v1/makumbusho_logs";
+const char* serverAddress = "https://<supabase-project-id>.supabase.co/rest/v1/<location>_logs";
 const char* apikey = "xxx";
 const char* location = "your_Location";
-const char* errorReportingAddress = "https://<supabase-project-id>.supabase.co/rest/v1/makumbusho_errors";
+const char* errorReportingAddress = "https://<supabase-project-id>.supabase.co/rest/v1/<location>_errors";
 
 volatile boolean isError = false;
 int errorCount = 0;
