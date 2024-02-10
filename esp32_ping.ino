@@ -132,9 +132,11 @@ void loop() {
 
     http.end(); // Free resources
   } else {
+    isError = true;
+    Serial.print("Error in WiFi connection ");
     digitalWrite(LED, HIGH);
     Serial.println("LED is on");
-    Serial.println("Error in WiFi connection");
+    logError("Error in WiFi connection");
   }
 
   if (isError) {
